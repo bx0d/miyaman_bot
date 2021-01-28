@@ -81,6 +81,7 @@ class MiyaTwi():
             print(time.time()-ret)
         else:  # 正常通信出来なかった場合
             message = "Failed: %d" % res.status_code
+            print('正常通信出来なかった場合: get_limit '+message)
 
         return ret
 

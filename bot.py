@@ -131,6 +131,7 @@ class MiyaClient(discord.Client):
     # 2号くん用
     no2_msg = []
     last_send_time = time.time()
+    limit_end = datetime.datetime(2000, 1, 1)
 
     def __init__(self, *, intents=None):
         super().__init__(intents=intents)
@@ -347,13 +348,23 @@ class MiyaClient(discord.Client):
 
             wait = self.tweet_report()
 
-            # 1号くんのオフラインチェックと、オンラインのまま仕事をサボっている場合のチェック
-            if MODEL_NO_2_ENABLE and (time_cnt % 6) == 0:
+            sdf = 0
+            if MODEL_NO_2_ENABLE:
+                # 1号くんがオンラインのまま仕事をサボっている場合のチェック
                 sdf = start - self.last_send_time
-                print('elapsed time {0:.1f}'.format(sdf/60))
-                if sdf > 16.5 * 60:
+                # print('elapsed time {0:.1f}'.format(sdf/60))
+                if sdf > 17 * 60:
                     self.no2_wake('ガガガ')
+                # 1号くんがTwitterAPI制限の回復待ちをしている場合のチェック
+                if self.limit_end != datetime.datetime(2000, 1, 1) and self.limit_end.timestamp() - start <= 0:
+                    if self.mj.sleep_mode_partner == 0 and self.mj.send_enable == 2:
+                        if self.no2_rest():
+                            self.q3.put('休憩します')
+                            self.last_send_time = time.time()
 
+            # 1号くんのオフラインチェック
+            if MODEL_NO_2_ENABLE and (time_cnt % 6) == 0:
+                print('elapsed time {0:.1f}'.format(sdf / 60))
                 gmem = guild.get_member(MODEL_NO_1_ID)
                 if gmem:
                     # print(gmem.raw_status)
@@ -407,6 +418,11 @@ class MiyaClient(discord.Client):
                 await asyncio.sleep(0.5)
             # 暫定発言措置
             if MODEL_NO_2_ENABLE:
+                while not self.q3.empty():
+                    msg = self.q3.get()
+                    for i in surveil_channels:
+                        await i.send(msg)
+                    await asyncio.sleep(0.5)
                 while not self.q2.empty():
                     msg = self.q2.get()
                     msg = msg[len(config.PROV_STR):]
@@ -416,12 +432,6 @@ class MiyaClient(discord.Client):
                         # 監視チャンネルじゃないかつ定期報告の時はスキップ
                         if (i.name in config.POST_CHANNEL_CONFIG) and ('[BOT]' in msg):
                             continue
-                        await i.send(msg)
-                    await asyncio.sleep(0.5)
-
-                while not self.q3.empty():
-                    msg = self.q3.get()
-                    for i in surveil_channels:
                         await i.send(msg)
                     await asyncio.sleep(0.5)
 
@@ -518,6 +528,15 @@ class MiyaClient(discord.Client):
                 force_dic_write = True
                 if my_model_no == 2:
                     self.no2_wake('おやすみなさい1号。では引き継ぎます')
+
+        elif 'リミット制限' in message.content:
+            if my_model_no == 2:
+                ltd = datetime.datetime.strptime(message.content,
+                                                 '[BOT] Twitterのリミット制限。一旦休憩します。（再開:%Y-%m-%d %H:%M:%S）')
+                if ltd.timestamp() - time.time() >= 60 * 3:
+                    self.last_send_time -= 60 * 18
+                    self.limit_end = ltd
+
         else:
             if my_model_no == 2:
                 self.last_send_time = time.time()
@@ -653,6 +672,7 @@ class MiyaClient(discord.Client):
         if self.mj.send_enable != 0:
             self.mj.send_enable = 0
             force_dic_write = True
+            self.limit_end = datetime.datetime(2000, 1, 1)
             return True
         return False
 

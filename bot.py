@@ -218,7 +218,7 @@ class MiyaClient(discord.Client):
                     bef = self.mj.get_following(user_id)
 
                     if not(screen_name in ex_follow):
-                        self.q.put(name+"のフォロー数が"+str(bef) +
+                        self.q.put("[BOT]"+name+"のフォロー数が"+str(bef) +
                                    "から"+str(following)+"になりました")
 
                     self.mj.set_following(user_id, following)
@@ -234,7 +234,7 @@ class MiyaClient(discord.Client):
                         bef = self.mj.get_favorite(user_id)
 
                         if not (screen_name in ex_iine):
-                            self.q.put(name+"のいいね数が"+str(bef) +
+                            self.q.put("[BOT]"+name+"のいいね数が"+str(bef) +
                                        "から"+str(fav)+"になりました")
 
                         self.mj.set_favorite(user_id, fav)

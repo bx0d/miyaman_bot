@@ -353,8 +353,8 @@ class MiyaClient(discord.Client):
                 # 1号くんがオンラインのまま仕事をサボっている場合のチェック
                 sdf = start - self.last_send_time
                 # print('elapsed time {0:.1f}'.format(sdf/60))
-                if sdf > 17 * 60:
-                    self.no2_wake('ガガガ')
+                # if sdf > 17 * 60:
+                #     self.no2_wake('ガガガ')
                 # 1号くんがTwitterAPI制限の回復待ちをしている場合のチェック
                 if self.limit_end != datetime.datetime(2000, 1, 1) and self.limit_end.timestamp() - start <= 0:
                     if self.mj.sleep_mode_partner == 0 and self.mj.send_enable == 2:
@@ -389,7 +389,7 @@ class MiyaClient(discord.Client):
             if (min % 15) == 0:
                 if self.fefteen_flag == False:
                     self.fefteen_flag = True
-                    self.regular_report()
+                    # self.regular_report()
             else:
                 self.fefteen_flag = False
 
@@ -412,7 +412,8 @@ class MiyaClient(discord.Client):
                             if self.mj.send_enable != 0:
                                 await i.send(msg)
                             else:
-                                self.no2_msg.append(msg)
+                                if i.name in config.SURVEIL_CHANNEL_CONFIG:
+                                    self.no2_msg.append(msg)
                         else:
                             await i.send(msg)
                 await asyncio.sleep(0.5)
@@ -730,7 +731,7 @@ class MiyaClient(discord.Client):
     async def status_mod(self):
         while True:
             c = self.get_count_down()
-            cds = '[{0}] - https://www.project-cold.net/'.format(c)
+            cds = '[-17:09;26][{0}] - https://www.project-cold.net/'.format(c)
             await client.change_presence(activity=discord.Activity(name=cds, type=discord.ActivityType.listening))
             await asyncio.sleep(30)
 

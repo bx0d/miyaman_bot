@@ -18,6 +18,8 @@ class MiyaTwi():
     AT = config.ACCESS_TOKEN
     ATS = config.ACCESS_TOKEN_SECRET
 
+    limit_remain = 1000
+
     def __init__(self, modelNo):
         self.twitter = OAuth1Session(
             self.CK, self.CS, self.AT, self.ATS)  # 認証処理
@@ -44,6 +46,8 @@ class MiyaTwi():
 
         if res.status_code == 200:  # 正常通信出来た場合
             timelines = json.loads(res.text)  # レスポンスからタイムラインリストを取得
+
+            self.limit_remain = res.headers['X-Rate-Limit-Remaining']
 
             if count == 1 and timelines:  # 初回かつ死神以外
                 statuses_count = timelines[0]['user']['statuses_count']

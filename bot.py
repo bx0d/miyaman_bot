@@ -130,7 +130,7 @@ class MiyaClient(discord.Client):
 
     # 2号くん用
     no2_msg = []
-    last_send_time = time.time()
+    last_send_time = 0  # time.time()
     limit_end = datetime.datetime(2000, 1, 1)
 
     def __init__(self, *, intents=None):
@@ -344,23 +344,24 @@ class MiyaClient(discord.Client):
 
             start = time.time()
             print("update: " + datetime.datetime.now().isoformat() +
-                  " count = "+str(self.mj.update_count))
+                  " count = "+str(self.mt.limit_remain))
 
             wait = self.tweet_report()
 
             sdf = 0
             if MODEL_NO_2_ENABLE:
                 # 1号くんがオンラインのまま仕事をサボっている場合のチェック
-                sdf = start - self.last_send_time
+                # sdf = start - self.last_send_time
+                sdf = -self.last_send_time  # API制限回復待ちのときだけ反応させる
                 # print('elapsed time {0:.1f}'.format(sdf/60))
-                # if sdf > 17 * 60:
-                #     self.no2_wake('ガガガ')
+                if sdf > 17 * 60:
+                    self.no2_wake('ガガガ')
                 # 1号くんがTwitterAPI制限の回復待ちをしている場合のチェック
                 if self.limit_end != datetime.datetime(2000, 1, 1) and self.limit_end.timestamp() - start <= 0:
                     if self.mj.sleep_mode_partner == 0 and self.mj.send_enable == 2:
                         if self.no2_rest():
-                            self.q3.put('休憩します')
-                            self.last_send_time = time.time()
+                            # self.q3.put('休憩します')
+                            self.last_send_time = 0  # time.time()
 
             # 1号くんのオフラインチェック
             if MODEL_NO_2_ENABLE and (time_cnt % 6) == 0:
@@ -437,8 +438,8 @@ class MiyaClient(discord.Client):
                     await asyncio.sleep(0.5)
 
             diff = time.time()-start
-            if diff < len(self.mj.dic) or wait != 0:
-                await asyncio.sleep(len(self.mj.dic)-diff+0.5+wait)
+            if diff < len(self.mj.dic)*1.5 or wait != 0:
+                await asyncio.sleep(len(self.mj.dic)*1.5-diff+0.5+wait)
 
     async def on_ready(self):
         print('We have logged in as {0.user}'.format(client))
@@ -540,7 +541,7 @@ class MiyaClient(discord.Client):
 
         else:
             if my_model_no == 2:
-                self.last_send_time = time.time()
+                self.last_send_time = 0  # time.time()
                 self.no2_msg.clear()
                 if self.mj.sleep_mode_partner == 0 and self.mj.send_enable != 0:
                     if self.no2_rest():
@@ -686,8 +687,8 @@ class MiyaClient(discord.Client):
             self.mj.send_enable = 1
             if comment == 'ガガガ':
                 self.mj.send_enable = 2
-            self.last_send_time = time.time()
-            if comment != '':
+            self.last_send_time = 0  # time.time()
+            if comment != '' and comment != 'ガガガ':
                 self.q3.put(comment)
             for s in self.no2_msg:
                 self.q2.put(config.PROV_STR+s)

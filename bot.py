@@ -76,6 +76,7 @@ pattern_list1 = [
     ['(カウントダウン)', '[NO2_COUNTDOWN]'],
     ['(サクサクサクマ|さくさくさくま)', '[NO2_SAKUSAKU]'],
     ['<:', '[NO2_EMOJICHECK]'],
+    ['アンケ', '[NO2_VOTE]'],
 
 ]
 
@@ -644,6 +645,26 @@ class MiyaClient(discord.Client):
         elif '[NO2_EMOJICHECK]' in cmd:
             print(message.content)
 
+        elif '[NO2_VOTE]' in cmd:
+            msg = message.content[message.content.find('"'):]
+            # print(msg)
+            tt = msg.split('"')
+            title = tt[1]
+            # print(tt)
+            table = []
+            for i in range(len(tt) - 2):
+                t = tt[i + 2]
+                if t != ' ' and t != '':
+                    table.append(t)
+            # print(table)
+            if len(table) < 2:
+                await message.channel.send('選択肢が少なすぎます')
+                return
+            if len(table) > 20:
+                await message.channel.send('選択肢が多すぎます')
+                return
+            await self.vote(message, title, table)
+
     # スリープモードの変更
 
     async def set_sleep_mode(self, message, model_no, onoff):
@@ -749,6 +770,21 @@ class MiyaClient(discord.Client):
                     elif gmem4.nick != newnick:
                         await gmem4.edit(nick=newnick)
                     await asyncio.sleep(10)
+
+    async def vote(self, message, title, table):
+        a = 'abcdefghijklmnopqrstuvwxyz'
+        name = message.author.name
+        s = ''
+        for i in range(len(table)):
+            s += f':regional_indicator_{a[i]}: {table[i]}\n'
+        embed = discord.Embed(color=0x3b88c3, title=title, description=s)
+        embed.set_author(name=name, icon_url=message.author.avatar_url)
+        embed.timestamp = message.created_at
+        await message.delete()
+        m = await message.channel.send(embed=embed)
+        emoji = "🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇶🇷🇸🇹🇺🇻🇼🇽🇾🇿"
+        for i in range(len(table)):
+            await m.add_reaction(emoji[i])
 
     def add_account(self, screen_name):
         res, k = self.mt.screen_name_to_id(screen_name)

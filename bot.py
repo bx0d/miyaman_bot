@@ -447,15 +447,17 @@ class MiyaClient(discord.Client):
 
     async def on_guild_available(self, guild):
         print("Connected :"+guild.name)
+        if guild.name != '『みやまん』考察discord':
+            return
         task = asyncio.create_task(self.worker(guild))
         task.set_name(guild.name)
 
         # ニックネームとかステータスを定期的に変更するタスク（とりあえず2号くんのみ）
         if MODEL_NO_2_ENABLE:
             task2 = asyncio.create_task(self.nickname_mod(guild))
-            task2.set_name('nickname_mod')
+            task2.set_name(guild.name + 'nickname_mod')
             task3 = asyncio.create_task(self.status_mod())
-            task3.set_name('status_mod')
+            task3.set_name(guild.name + 'status_mod')
 
         print(asyncio.all_tasks())
         # await task
@@ -831,7 +833,7 @@ class MiyaClient(discord.Client):
         self.mj.dump()
         for task in asyncio.all_tasks():
             print(task.get_name())
-            if task.get_name() == guild.name:
+            if guild.name in task.get_name():
                 task.cancel()
 
     async def on_disconnect(self):
